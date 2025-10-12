@@ -140,3 +140,48 @@ else:
         DATABASE_POOL_RECYCLE = int(DATABASE_POOL_RECYCLE)
     except Exception:
         DATABASE_POOL_RECYCLE = 3600
+
+
+####################################
+# UVICORN WORKERS
+####################################
+
+# Number of uvicorn workers to handle requests
+UVICORN_WORKERS = os.environ.get("UVICORN_WORKERS", 1)
+try:
+    UVICORN_WORKERS = int(UVICORN_WORKERS)
+    if UVICORN_WORKERS < 1:
+        UVICORN_WORKERS = 1
+except ValueError:
+    UVICORN_WORKERS = 1
+    log.info(f"Invalid UVICORN_WORKERS value, defaulting to {UVICORN_WORKERS}")
+
+
+####################################
+# STORAGE PROVIDER
+####################################
+
+STORAGE_PROVIDER = os.environ.get("STORAGE_PROVIDER", "local")
+
+S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID", None)
+S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY", None)
+S3_REGION_NAME = os.environ.get("S3_REGION_NAME", None)
+S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", None)
+S3_KEY_PREFIX = os.environ.get("S3_KEY_PREFIX", None)
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", None)
+S3_ENABLE_TAGGING = os.environ.get("S3_ENABLE_TAGGING", "false").lower() == "true"
+
+
+####################################
+# File Upload DIR
+####################################
+
+UPLOAD_DIR = DATA_DIR / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+####################################
+# Miscellaneous
+####################################
+
+ENV = os.environ.get("ENV", "dev")
