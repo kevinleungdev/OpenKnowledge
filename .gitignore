@@ -1,2 +1,5 @@
 .env
 .env.*
+
+# VS Code configuration
+.vscode/
