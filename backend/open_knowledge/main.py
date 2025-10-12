@@ -34,7 +34,7 @@ app = FastAPI(
 
 
 # For integrations
-app.state.config = AppConfig()
+# app.state.config = AppConfig()
 
 
 ########################################

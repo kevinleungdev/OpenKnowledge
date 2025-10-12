@@ -124,10 +124,12 @@ class S3StorageProvider(StorageProvider):
 
         self.local_storage = LoacalStorageProvider()
 
+
     @staticmethod
     def sanitize_tag_value(s: str) -> str:
         """Only include S3 allowed characters."""
         return re.sub(r"[^a-zA-Z0-9 äöüÄÖÜß\+\-=\._:/@]", "", s)
+
 
     def upload_file(
         self, file: BinaryIO, filename: str, tags: Dict[str, str]
@@ -161,6 +163,7 @@ class S3StorageProvider(StorageProvider):
         except ClientError as e:
             raise RuntimeError(f"Error uploading file to S3. Reason: {e}")
 
+
     def get_file(self, file_path: str) -> str:
         """Handles downloading of the file from s3 storage"""
         try:
@@ -172,6 +175,7 @@ class S3StorageProvider(StorageProvider):
         except ClientError as e:
             raise RuntimeError(f"Error downloading file from S3. Reason: {e}")
 
+
     def delete_file(self, file_path: str) -> None:
         """Handles deletion of a file from s3 storage."""
         try:
@@ -182,6 +186,7 @@ class S3StorageProvider(StorageProvider):
         
         # Always delete from local storage
         self.local_storage.delete_file(file_path)
+
 
     def delete_all_files(self) -> None:
         """Handles deletions of all files from s3 storage."""
@@ -206,6 +211,7 @@ class S3StorageProvider(StorageProvider):
     # The s3 key is the name assigned to an object. It excludes the bucket name, but includes the internal path and the filename.
     def _extract_s3_key(self, full_file_path: str) -> str:
         return "/".join(full_file_path.split("//")[1].split("/")[1:])
+
 
     def _get_local_file_path(self, s3_key: str) -> str:
         return f"{UPLOAD_DIR}/{s3_key.split('/')[-1]}"

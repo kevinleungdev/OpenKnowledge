@@ -3,6 +3,7 @@
     pydantic==2.11.9
     boto3==1.40.47
     typer==0.19.2
+    python-multipart==0.0.20
     
     alembic==1.16.5
     sqlalchemy==2.0.43

@@ -3,3 +3,6 @@
 
 # VS Code configuration
 .vscode/
+
+# Data folder
+data/
