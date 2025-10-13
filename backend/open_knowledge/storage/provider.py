@@ -34,13 +34,16 @@ class StorageProvider(ABC):
     def get_file(self, file_path: str) -> str:
         pass
 
+
     @abstractmethod
     def upload_file(self, file: BinaryIO, filename: str, tags: Dict[str, str]) -> Tuple[bytes, str]:
         pass
 
+
     @abstractmethod
     def delete_all_files(self) -> None:
         pass
+
 
     @abstractmethod
     def delete_file(self, file_path: str) -> None:
@@ -62,9 +65,11 @@ class LoacalStorageProvider(StorageProvider):
 
         return contents, file_path
 
+
     def get_file(self, file_path: str) -> str:
         """Handles downloading of the file from the local storage"""
         return file_path
+
 
     def delete_file(self, file_path: str) -> None:
         """Handles deletion of a file from local storage."""
@@ -75,6 +80,7 @@ class LoacalStorageProvider(StorageProvider):
             os.remove(file_path)
         else:
             log.warning(f"File {file_path} not found in local storage.")
+
 
     def delete_all_files(self) -> None:
         """Handles deletion of all files from local storage."""
@@ -136,7 +142,7 @@ class S3StorageProvider(StorageProvider):
     ) -> Tuple[bytes, str]:
         """Handles uploading of the file to s3 storage"""
         _, file_path = self.local_storage.upload_file(file, filename, tags)
-        s3_key = os.path.join(self.key_prefix, filename)
+        s3_key = f"{self.key_prefix}_{filename}"
         try:
             self.s3_client.upload_file(file_path, self.bucket_name, s3_key)
 

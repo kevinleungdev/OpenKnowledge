@@ -135,14 +135,14 @@ def upload_file_handler(
             else:
                 # TODO: Process uploaded files
                 pass
+        
+        if file_item:
+            return file_item
         else:
-            if file_item:
-                return file_item
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=ERROR_MESSAGES.DEFAULT("Error uploading file"),
-                )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ERROR_MESSAGES.DEFAULT("Error uploading file"),
+            )
 
     except Exception as e:
         log.exception(e)
