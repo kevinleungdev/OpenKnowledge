@@ -74,7 +74,7 @@ SessionLocal = sessionmaker(
 )
 metadata_obj = MetaData(schema=DATABASE_SCHEMA)
 Base = declarative_base(metadata=metadata_obj)
-Session= scoped_session(SessionLocal)
+Session = scoped_session(SessionLocal)
 
 def get_session():
     # Everything before `yield` is treated as `__enter__` method (setup code)

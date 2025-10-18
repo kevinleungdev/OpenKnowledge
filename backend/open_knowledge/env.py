@@ -143,6 +143,70 @@ else:
 
 
 ####################################
+# VECTOR DATABASE
+####################################
+
+VECTOR_DB = os.environ.get("VECTOR_DB", "pgvector")
+
+# Pgvector
+PGVECTOR_DB_URL = os.getenv("PGVECTOR_DB_URL", DATABASE_URL)
+
+if VECTOR_DB == "pgvector" and not PGVECTOR_DB_URL.startswith("postgres"):
+    raise ValueError(
+        "Pgvector requires setting PGVECTOR_DB_URL or using Postgres with vector extension as the primary database."
+    )
+PGVECTOR_INITIALIZE_MAX_VECTOR_LENGTH = int(
+    os.getenv("PGVECTOR_INITIALIZE_MAX_VECTOR_LENGTH", 1536)
+)
+
+PGVECTOR_PGCRYPTO = os.getenv("PGVECTOR_PGCRYPTO", "false").lower() == "true"
+
+PGVECTOR_PGCRYPTO_KEY = os.getenv("PGVECTOR_PGCRYPTO_KEY", None)
+if PGVECTOR_PGCRYPTO and not PGVECTOR_PGCRYPTO_KEY:
+    raise ValueError(
+        "PGVECTOR_PGCRYPTO is enabled but PGVECTOR_PGCRYPTO_KEY is not set. Please provide a valid key."
+    )
+
+PGVECTOR_POOL_SIZE = os.environ.get("PGVECTOR_POOL_SIZE", None)
+
+if PGVECTOR_POOL_SIZE != None:
+    try:
+        PGVECTOR_POOL_SIZE = int(PGVECTOR_POOL_SIZE)
+    except Exception:
+        PGVECTOR_POOL_SIZE = None
+
+PGVECTOR_POOL_MAX_OVERFLOW = os.environ.get("PGVECTOR_POOL_MAX_OVERFLOW", 0)
+
+if PGVECTOR_POOL_MAX_OVERFLOW == "":
+    PGVECTOR_POOL_MAX_OVERFLOW = 0
+else:
+    try:
+        PGVECTOR_POOL_MAX_OVERFLOW = int(PGVECTOR_POOL_MAX_OVERFLOW)
+    except Exception:
+        PGVECTOR_POOL_MAX_OVERFLOW = 0
+
+PGVECTOR_POOL_TIMEOUT = os.environ.get("PGVECTOR_POOL_TIMEOUT", 30)
+
+if PGVECTOR_POOL_TIMEOUT == "":
+    PGVECTOR_POOL_TIMEOUT = 30
+else:
+    try:
+        PGVECTOR_POOL_TIMEOUT = int(PGVECTOR_POOL_TIMEOUT)
+    except Exception:
+        PGVECTOR_POOL_TIMEOUT = 30
+
+PGVECTOR_POOL_RECYCLE = os.environ.get("PGVECTOR_POOL_RECYCLE", 3600)
+
+if PGVECTOR_POOL_RECYCLE == "":
+    PGVECTOR_POOL_RECYCLE = 3600
+else:
+    try:
+        PGVECTOR_POOL_RECYCLE = int(PGVECTOR_POOL_RECYCLE)
+    except Exception:
+        PGVECTOR_POOL_RECYCLE = 3600
+
+
+####################################
 # UVICORN WORKERS
 ####################################
 

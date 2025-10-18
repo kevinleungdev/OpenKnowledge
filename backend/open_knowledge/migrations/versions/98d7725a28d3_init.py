@@ -73,6 +73,7 @@ def upgrade() -> None:
             sa.Column("id", sa.String(), nullable=False),
             sa.Column("user_id", sa.String(), nullable=True),
             sa.Column("filename", sa.Text(), nullable=True),
+            sa.Column("hash", sa.Text(), nullable=True),
             sa.Column("path", sa.Text(), nullable=True),
             sa.Column("data", JSONField(), nullable=True),
             sa.Column("meta", JSONField(), nullable=True),

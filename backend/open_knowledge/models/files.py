@@ -7,8 +7,10 @@ from sqlalchemy import JSON, BigInteger, Column, String, Text
 from open_knowledge.env import SRC_LOG_LEVELS
 from open_knowledge.internal.db import Base, JSONField, get_db
 
+
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MODELS"])
+
 
 ####################
 # Files DB Schema
