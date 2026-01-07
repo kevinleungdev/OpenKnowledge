@@ -81,6 +81,40 @@ async def get_knowledge(user=Depends(get_verified_user)):
 
 
 ############################
+# GetKnowledgeById
+############################
+
+
+class KnowledgeFilesResponse(KnowledgeResponse):
+    files: list[FileMetadataResponse]
+
+
+@router.get(f"/{id}", response_model=Optional[KnowledgeFilesResponse])
+async def get_knowledge_by_id(id: str, user=Depends(get_verified_user)):
+    knowledge = Knowledges.get_knowledge_by_id(id=id)
+
+    if knowledge:
+        if (
+            user.role == "admin"
+            or knowledge.user_id == str(user.id)
+            or has_access(user.id, "read", knowledge.access_control)
+        ):
+            file_ids = knowledge.data.get(
+                "file_ids", []) if knowledge.data else []
+            files = Files.get_file_metadatas_by_ids(file_ids)
+
+            return KnowledgeFilesResponse(
+                **knowledge.model_dump(),
+                files=files
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=ERROR_MESSAGES.NOT_FOUND
+        )
+
+
+############################
 # CreateNewKnowledge
 ############################
 
@@ -118,13 +152,14 @@ class KnowledgeFileIdForm(BaseModel):
     file_id: str
 
 
-def add_file_to_knowledge_by_id(
+@router.post("/{id}/file/add", response_model=Optional[KnowledgeFilesResponse])
+async def add_file_to_knowledge_by_id(
     request: Request,
     id: str,
     form_data: KnowledgeFileIdForm,
     user=Depends(get_verified_user),
 ):
-    knowledge = Knowledges.get_knowledge_by_id(id=id)
+    knowledge = Knowledges.get_knowledge_by_id(id)
 
     if not knowledge:
         raise HTTPException(
@@ -157,3 +192,37 @@ def add_file_to_knowledge_by_id(
 
     # Add content to the vector database
     # TODO
+
+    if knowledge:
+        data = knowledge.data or {}
+        file_ids = data.get("file_ids", [])
+
+        if form_data.file_id not in file_ids:
+            file_ids.append(form_data.file_id)
+            data["file_ids"] = file_ids
+
+            knowledge = Knowledges.update_knowledge_data_by_id(
+                id=id, data=data)
+
+            if knowledge:
+                files = Files.get_file_metadatas_by_ids(file_ids)
+
+                return KnowledgeFilesResponse(
+                    **knowledge.model_dump(),
+                    files=files,
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=ERROR_MESSAGES.DEFAULT("knowledge")
+                )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ERROR_MESSAGES.DEFAULT("file_id"),
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ERROR_MESSAGES.NOT_FOUND,
+        )

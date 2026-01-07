@@ -160,7 +160,7 @@ class KnowledgeTable:
 
     def get_knowledge_by_id(self, id: str) -> Optional[KnowledgeModel]:
         with get_db() as db:
-            knowledge = db.query(Knowledge).filter(id=id).first()
+            knowledge = db.query(Knowledge).filter_by(id=id).first()
             return KnowledgeModel.model_validate(knowledge) if knowledge else None
 
     def update_knowledge_by_id(
@@ -184,7 +184,7 @@ class KnowledgeTable:
     ) -> Optional[KnowledgeModel]:
         try:
             with get_db() as db:
-                db.query(Knowledge).filter(id=id).update(
+                db.query(Knowledge).filter_by(id=id).update(
                     {
                         "data": data,
                         "updated_at": int(time.time()),
