@@ -1,15 +1,15 @@
-    fastapi==0.118.0
-    uvicorn[standard]==0.37.0
-    pydantic==2.11.9
-    boto3==1.40.47
-    typer==0.19.2
-    python-multipart==0.0.20
+fastapi==0.118.0
+uvicorn[standard]==0.37.0
+pydantic==2.11.9
+boto3==1.40.47
+typer==0.19.2
+python-multipart==0.0.20
     
-    alembic==1.16.5
-    sqlalchemy==2.0.43
+alembic==1.16.5
+sqlalchemy==2.0.43
 
-    psycopg2-binary==2.9.10
-    pgvector==0.4.1
+psycopg2-binary==2.9.10
+pgvector==0.4.1
+PyJWT==2.10.1
 
-    transformers
-    sentence-transformers==5.1.1
+supabase==2.22.1

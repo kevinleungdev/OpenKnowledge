@@ -45,10 +45,10 @@ class FileModel(BaseModel):
 
     filename: str
     path: Optional[str] = None
-    
+
     data: Optional[dict]
     meta: Optional[dict] = None
-    
+
     access_control: Optional[dict] = None
 
     created_at: Optional[int]
@@ -80,7 +80,7 @@ class FileModelResponse(BaseModel):
     created_at: int
     updated_at: int
 
-    model_config =  ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow")
 
 
 class FileMetadataResponse(BaseModel):
@@ -122,10 +122,60 @@ class FilesTable:
                 if result:
                     return FileModel.model_validate(result)
                 else:
-                     return None
+                    return None
             except Exception as e:
                 log.error(f"Error inserting new file: {e}")
                 return None
+
+    def get_file_by_id(self, id: str) -> Optional[FileModel]:
+        with get_db() as db:
+            try:
+                file = db.get(File, id)
+                return FileModel.model_validate(file)
+            except Exception:
+                return None
+
+    def get_file_metadata_by_id(self, id: str) -> Optional[FileMetadataResponse]:
+        with get_db() as db:
+            try:
+                file = db.get(File, id)
+                return FileMetadataResponse(
+                    id=file.id,
+                    meta=file.meta,
+                    created_at=file.created_at,
+                    updated_at=file.updated_at,
+                )
+            except Exception:
+                return None
+
+    def get_files(self) -> list[FileModel]:
+        with get_db() as db:
+            return [FileModel.model_validate(file) for file in db.query(File).all()]
+
+    def get_files_by_ids(self, ids: list[str]) -> list[FileModel]:
+        with get_db() as db:
+            return [
+                FileModel.model_validate(file)
+                for file in db.query(File)
+                .filter(File.id.in_(ids))
+                .order_by(File.updated_at.desc())
+                .all()
+            ]
+
+    def get_file_metadatas_by_ids(self, ids: list[str]) -> list[FileMetadataResponse]:
+        with get_db() as db:
+            return [
+                FileMetadataResponse(
+                    id=file.id,
+                    meta=file.meta,
+                    created_at=file.created_at,
+                    updated_at=file.updated_at,
+                )
+                for file in db.query(File)
+                .filter(File.id.in_(ids))
+                .order_by(File.updated_at.desc())
+                .all()
+            ]
 
 
 Files = FilesTable()

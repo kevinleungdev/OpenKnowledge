@@ -7,9 +7,10 @@ from turtle import back
 from typing import Optional
 import uuid
 
+from open_knowledge.utils.auth import get_verified_user
 from open_knowledge.storage.provider import Storage
 from open_knowledge.models.files import FileForm, FileModelResponse, Files
-from open_knowledge.env import SRC_LOG_LEVELS
+from open_knowledge.env import SRC_LOG_LEVELS, RAG_ALLOWED_FILE_EXTENSIONS
 from open_knowledge.constants import ERROR_MESSAGES
 
 from fastapi import (
@@ -39,32 +40,11 @@ router = APIRouter()
 @router.post("/", response_model=FileModelResponse)
 def upload_file(
     request: Request,
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     metadata: Optional[dict | str] = Form(None),
     process: bool = Query(True),
-    process_in_background: bool = Query(True),
-    # user=Depends(get_verified_user),
-):
-    return upload_file_handler(
-        request,
-        file,
-        metadata,
-        process,
-        process_in_background,
-        background_tasks,
-        # user,
-    )
-
-
-def upload_file_handler(
-    request: Request,
-    file: UploadFile = File(...),
-    metadata: Optional[dict | str] = Form(None),
-    process: bool = Query(True),
-    process_in_background: bool = Query(True),
-    background_tasks: Optional[BackgroundTasks] = None,
-    # user: User = None,
+    internal: bool = False,
+    user=Depends(get_verified_user),
 ):
     log.info(f"file.content_type: {file.content_type}")
 
@@ -73,26 +53,28 @@ def upload_file_handler(
             metadata = json.loads(metadata)
         except json.JSONDecodeError as e:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, 
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=ERROR_MESSAGES.DEFAULT("Invalid metadata format"),
             )
-    
     file_metadata = metadata if metadata else {}
 
     try:
         unsanitized_filename = file.filename
-        
-        if unsanitized_filename is None:
-            raise ValueError("file.filename cannot be None")
         filename = os.path.basename(unsanitized_filename)
 
         file_extension = os.path.splitext(filename)[1]
         # Remove the leadding dot from the extension
-        file_extension = file_extension[1:]
+        file_extension = file_extension[1:] if file_extension else ""
 
-        # TODO: check if the file type is allowed to upload
+        if (not internal) and (file_extension not in RAG_ALLOWED_FILE_EXTENSIONS):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ERROR_MESSAGES.DEFAULT(
+                    f"File type {file_extension} is not allowed"
+                ),
+            )
 
-        # Replace filename with uuid
+        # replace filename with uuid
         id = str(uuid.uuid4())
         name = filename
 
@@ -101,15 +83,15 @@ def upload_file_handler(
             file.file,
             filename,
             {
-                # "OpenKnowledge-User-Email": user.email,
-                # "OpenKnowledge-User-Id": user.id,
-                # "OpenKnowledge-User-Name": user.name,
+                "OpenKnowledge-User-Email": user.email,
+                "OpenKnowledge-User-Id": str(user.id),
+                "OpenKnowledge-User-Name": user.user_info.username if user.user_info else "",
                 "OpenKnowledge-File-Id": id,
             }
         )
 
         file_item = Files.insert_new_file(
-            "admin!@##$", # user.id
+            str(user.id),
             FileForm(
                 **{
                     "id": id,
@@ -129,13 +111,8 @@ def upload_file_handler(
         )
 
         if process:
-            if background_tasks and process_in_background:
-                # TODO: Backgroud tasks for processing uploaded files
-                pass
-            else:
-                # TODO: Process uploaded files
-                pass
-        
+            pass
+
         if file_item:
             return file_item
         else:

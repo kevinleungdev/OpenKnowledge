@@ -3,7 +3,7 @@ import sys
 
 from fastapi import FastAPI
 
-from open_knowledge.routers import files
+from open_knowledge.routers import files, knowledge
 from open_knowledge.config import AppConfig
 from open_knowledge.env import ENV, GLOBAL_LOG_LEVEL, SRC_LOG_LEVELS
 
@@ -45,5 +45,7 @@ app = FastAPI(
 
 app.state.MODELS = {}
 
+app.include_router(
+    knowledge.router, prefix="/api/v1/knowledge", tags=["knowledge"])
 
 app.include_router(files.router, prefix="/api/v1/files", tags=["files"])

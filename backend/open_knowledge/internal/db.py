@@ -32,12 +32,14 @@ class JSONField(types.TypeDecorator):
         return json.dumps(value)
 
     def process_result_value(self, value: Optional[_T], dialect: Dialect) -> Any:
-        if value is not None:
+        if isinstance(value, (str, bytes, bytearray)):
             return json.loads(value)
+        elif isinstance(value, dict):
+            return value
 
     def copy(self, **kw: Any):
         assert isinstance(self.impl, types.Text)
-        
+
         return JSONField(self.impl.length)
 
     def db_value(self, value):
@@ -62,19 +64,21 @@ if isinstance(DATABASE_POOL_SIZE, int):
             poolclass=QueuePool,
         )
     else:
-        engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True, poolclass=NullPool)
+        engine = create_engine(SQLALCHEMY_DATABASE_URL,
+                               pool_pre_ping=True, poolclass=NullPool)
 else:
     engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(
-    autocommit=False, 
-    autoflush=False, 
-    bind=engine, 
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
     expire_on_commit=False
 )
 metadata_obj = MetaData(schema=DATABASE_SCHEMA)
 Base = declarative_base(metadata=metadata_obj)
 Session = scoped_session(SessionLocal)
+
 
 def get_session():
     # Everything before `yield` is treated as `__enter__` method (setup code)
@@ -85,5 +89,6 @@ def get_session():
     finally:
         # Everything after `yield` is treated as `__exit__` method (teardown code)
         db.close()
+
 
 get_db = contextmanager(get_session)

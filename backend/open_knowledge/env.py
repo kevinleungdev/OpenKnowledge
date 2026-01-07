@@ -51,6 +51,7 @@ log_sources = [
     "OLLAMA",
     "OPENAI",
     "RAG",
+    "OAUTH",
 ]
 
 SRC_LOG_LEVELS = {}
@@ -72,7 +73,8 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", BASE_DIR / "data")).resolve()
 # Database
 ####################################
 
-DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DATA_DIR}/knowledgebase.db")
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL", f"sqlite:///{DATA_DIR}/knowledgebase.db")
 
 DATABASE_TYPE = os.environ.get("DATABASE_TYPE")
 DATABASE_USER = os.environ.get("DATABASE_USER")
@@ -222,6 +224,22 @@ except ValueError:
 
 
 ####################################
+# WEBUI_SECRET_KEY
+####################################
+
+WEBUI_SECRET_KEY = os.environ.get(
+    "WEBUI_SECRET_KEY",
+    os.environ.get(
+        "WEBUI_JWT_SECRET_KEY", "t0p-s3cr3t"
+    ),
+)
+
+WEBUI_ADMIN_USER = os.environ.get(
+    "WEBUI_ADMIN_USER", "b02619bf-5021-4631-853e-7dccc7e9ab3e"
+)
+
+
+####################################
 # STORAGE PROVIDER
 ####################################
 
@@ -233,7 +251,8 @@ S3_REGION_NAME = os.environ.get("S3_REGION_NAME", None)
 S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", None)
 S3_KEY_PREFIX = os.environ.get("S3_KEY_PREFIX", None)
 S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", None)
-S3_ENABLE_TAGGING = os.environ.get("S3_ENABLE_TAGGING", "false").lower() == "true"
+S3_ENABLE_TAGGING = os.environ.get(
+    "S3_ENABLE_TAGGING", "false").lower() == "true"
 
 
 ####################################
@@ -242,6 +261,17 @@ S3_ENABLE_TAGGING = os.environ.get("S3_ENABLE_TAGGING", "false").lower() == "tru
 
 UPLOAD_DIR = DATA_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+####################################
+# Information Retrieval (RAG)
+####################################
+
+RAG_ALLOWED_FILE_EXTENSIONS = [
+    ext.strip()
+    for ext in os.environ.get("ALLOWED_FILE_EXTENSIONS", "").split(",")
+    if ext.strip()
+]
 
 
 ####################################
