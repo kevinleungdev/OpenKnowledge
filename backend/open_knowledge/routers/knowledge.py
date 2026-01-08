@@ -89,13 +89,13 @@ class KnowledgeFilesResponse(KnowledgeResponse):
     files: list[FileMetadataResponse]
 
 
-@router.get(f"/{id}", response_model=Optional[KnowledgeFilesResponse])
+@router.get("/{id}", response_model=Optional[KnowledgeFilesResponse])
 async def get_knowledge_by_id(id: str, user=Depends(get_verified_user)):
     knowledge = Knowledges.get_knowledge_by_id(id=id)
 
     if knowledge:
         if (
-            user.role == "admin"
+            user.user_info.role == "admin"
             or knowledge.user_id == str(user.id)
             or has_access(user.id, "read", knowledge.access_control)
         ):
