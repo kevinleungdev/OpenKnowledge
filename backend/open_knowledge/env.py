@@ -4,6 +4,7 @@ from shutil import ExecError
 import sys
 
 from pathlib import Path
+from tkinter import NO
 
 ####################################
 # Load .env file
@@ -67,6 +68,16 @@ log.setLevel(SRC_LOG_LEVELS["CONFIG"])
 
 
 DATA_DIR = Path(os.environ.get("DATA_DIR", BASE_DIR / "data")).resolve()
+
+
+####################################
+# ENABLE_FORWARD_USER_INFO_HEADERS
+####################################
+
+ENABLE_FORWARD_USER_INFO_HEADERS = (
+    os.environ.get("ENABLE_FORWARD_USER_INFO_HEADERS",
+                   "False").lower() == "true"
+)
 
 
 ####################################
@@ -279,3 +290,22 @@ RAG_ALLOWED_FILE_EXTENSIONS = [
 ####################################
 
 ENV = os.environ.get("ENV", "dev")
+
+
+####################################
+# RAG CONFIGURATION
+####################################
+
+RAG_EMBEDDING_PREFIX_FIELD_NAME = os.environ.get(
+    "RAG_EMBEDDING_PREFIX_FIELD_NAME", None
+)
+
+RAG_EMBEDDING_ENGINE = os.environ.get("RAG_EMBEDDING_ENGINE", None)
+RAG_RERANKING_ENGINE = os.environ.get("RAG_RERANKING_ENGINE", None)
+
+RAG_EMBEDDING_MODEL = os.environ.get("RAG_EMBEDDING_MODEL", None)
+RAG_RERANKING_MODEL = os.environ.get("RAG_RERANKING_MODEL", None)
+
+RAG_JINA_API_BASE_URL = os.environ.get(
+    "RAG_JINA_API_BASE_URL", "https://api.jina.ai/v1/")
+RAG_JINA_API_KEY = os.environ.get("RAG_JINA_API_KEY", None)
