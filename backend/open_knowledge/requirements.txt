@@ -16,3 +16,6 @@ transformers==4.57.1
 sentence-transformers==5.1.1
 
 supabase==2.22.1
+
+langchain==1.2.3
+langchain-community==0.4.1
