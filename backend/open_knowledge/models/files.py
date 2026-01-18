@@ -60,10 +60,20 @@ class FileModel(BaseModel):
 ####################
 
 
+class FileChunkSettings(BaseModel):
+    mode: str = "general"
+    delimiter: Optional[str] = "\n\n"
+    max_chunk_length: Optional[int] = 1024
+    chunk_overlap: Optional[int] = 50
+
+    model_config = ConfigDict(extra="allow")
+
+
 class FileMeta(BaseModel):
     name: Optional[str] = None
     content_type: Optional[str] = None
     size: Optional[int] = None
+    chunk_settings: Optional[FileChunkSettings] = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -146,6 +156,7 @@ class FilesTable:
                     updated_at=file.updated_at,
                 )
             except Exception:
+                log.exception(f"Error getting file metadata by id '{id}': {e}")
                 return None
 
     def get_files(self) -> list[FileModel]:
@@ -176,6 +187,71 @@ class FilesTable:
                 .order_by(File.updated_at.desc())
                 .all()
             ]
+
+    def get_files_by_user_id(self, user_id: str) -> list[FileModel]:
+        with get_db() as db:
+            return [
+                FileModel.model_validate(file)
+                for file in db.query(File).filter_by(user_id=user_id).all()
+            ]
+
+    def update_file_hash_by_id(self, id: str, hash: str) -> Optional[FileModel]:
+        with get_db() as db:
+            try:
+                file = db.query(File).filter_by(id=id).first()
+                file.hash = hash
+                db.commit()
+
+                return FileModel.model_validate(file)
+            except Exception as e:
+                log.exception(f"Error updating file hash by id '{id}': {e}")
+                return None
+
+    def update_file_data_by_id(self, id: str, data: dict) -> Optional[FileModel]:
+        with get_db() as db:
+            try:
+                file = db.query(File).filter_by(id=id).first()
+                file.data = {**(file.data if file.data else {}), **data}
+                db.commit()
+
+                return FileModel.model_validate(file)
+            except Exception as e:
+                log.exception(f"Error updating file data by id '{id}': {e}")
+                return None
+
+    def update_file_meta_by_id(self, id: str, meta: dict) -> Optional[FileModel]:
+        with get_db() as db:
+            try:
+                file = db.query(File).filter_by(id=id).first()
+                file.meta = {**(file.meta if file.meta else {}), **meta}
+                db.commit()
+
+                return FileModel.model_validate(file)
+            except Exception as e:
+                log.exception(f"Error update file meta by id '{id}': {e}")
+                return None
+
+    def delete_file_by_id(self, id: str) -> bool:
+        with get_db() as db:
+            try:
+                db.query(File).filter_by(id=id).delete()
+                db.commit()
+
+                return True
+            except Exception as e:
+                log.exception(f"Error deleting file by id '{id}': {e}")
+                return False
+
+    def delete_all_files(self) -> bool:
+        with get_db() as db:
+            try:
+                db.query(File).delete()
+                db.commit()
+
+                return True
+            except Exception as e:
+                log.exception(f"Error deleting all files: {e}")
+                return False
 
 
 Files = FilesTable()
