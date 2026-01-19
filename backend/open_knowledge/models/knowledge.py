@@ -3,16 +3,14 @@ from math import perm
 import uuid
 import time
 
-from typing import Text, Optional
-
+from typing import Literal, Text, Optional
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import JSON, BigInteger, Column, Text
 
-from open_knowledge.utils import access_control
 from open_knowledge.models.users import Users, UserResponse
 from open_knowledge.internal.db import Base, get_db
 from open_knowledge.env import SRC_LOG_LEVELS
-from open_knowledge.models.files import FileMetadataResponse
+from open_knowledge.models.files import FileMeta, FileMetadataResponse
 from open_knowledge.utils.access_control import has_access
 
 
@@ -56,6 +54,30 @@ class Knowledge(Base):
 
     created_at = Column(BigInteger)
     updated_at = Column(BigInteger)
+
+
+class RetrivalSetting(BaseModel):
+    retrival_mode: Literal["hybrid", "semantic", "keyword"] = None
+
+    hybrid_mode: Literal["weight", "rerank"] = None,
+    weight_keyword_score: Optional[float] = 0.3,
+    rerank_model: Optional[str] = None,
+
+    top_k: int = 5,
+    score_threshold: float = 0.5,
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class KnowledgeSetting(BaseModel):
+    chunk_mode: Optional[Literal["general", "parent_child"]] = None,
+
+    embedding_model: Optional[str] = None,
+    index_mode: Literal["high_quality", "economical"] = None,
+
+    retrival_setting: Optional[RetrivalSetting] = None,
+
+    model_config = ConfigDict(extra="ignore")
 
 
 class KnowledgeModel(BaseModel):
@@ -194,6 +216,24 @@ class KnowledgeTable:
                 return self.get_knowledge_by_id(id=id)
         except Exception as e:
             log.exception(f"Error updating knowledge by id `{id}`: {e}")
+            return None
+
+    def update_knowledge_meta_by_id(
+        self, id: str, meta: dict
+    ) -> Optional[KnowledgeModel]:
+        try:
+            with get_db() as db:
+                db.query(Knowledge).filter_by(id=id).update(
+                    {
+                        "meta": meta,
+                        "updated_at": int(time.time())
+                    }
+                )
+                db.commit()
+
+                return self.get_knowledge_by_id(id=id)
+        except Exception as e:
+            log.exception(e)
             return None
 
     def delete_knowledge_by_id(self, id: str) -> bool:

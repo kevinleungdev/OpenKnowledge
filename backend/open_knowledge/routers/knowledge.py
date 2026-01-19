@@ -1,3 +1,4 @@
+from curses import meta
 import logging
 
 from typing import List, Optional
@@ -7,6 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from open_knowledge.models import knowledge
 from open_knowledge.utils.auth import get_verified_user
 from open_knowledge.models.knowledge import (
+    KnowledgeModel,
+    KnowledgeSetting,
     Knowledges,
     KnowledgeForm,
     KnowledgeResponse,
@@ -225,4 +228,53 @@ async def add_file_to_knowledge_by_id(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ERROR_MESSAGES.NOT_FOUND,
+        )
+
+
+############################
+# Update Knowledge Settings
+############################
+
+
+class KnowledgeSettingForm(BaseModel):
+    settings: KnowledgeSetting
+
+
+@router.post("/{id}/settings", response_model=Optional[KnowledgeModel])
+def update_knowledge_settings_by_id(
+    request: Request, id: str, form_data: KnowledgeSettingForm, user=Depends(get_verified_user)
+):
+    knowledge = Knowledges.get_knowledge_by_id(id)
+
+    if not knowledge:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ERROR_MESSAGES.NOT_FOUND,
+        )
+
+    if (
+        user.id == knowledge.user_id
+        or (user.user_info and user.user_info.role == "admin")
+        or has_access(user.id, "write", knowledge.access_control)
+    ):
+        existing_settings = knowledge.meta["settings"] if knowledge.meta and "settings" in knowledge.meta else {
+        }
+
+        # some attributes are only allowed to configured when creating the knowledge
+        for attr in ["chunk_mode", "embedding_model"]:
+            if attr in existing_settings and attr in form_data.settings:
+                log.info(
+                    f"remove attribute '{attr}' from the form data since this attribute has been set!")
+                del form_data.settings[attr]
+
+        metadata = {
+            **(knowledge.meta if knowledge.meta else {}),
+            **form_data.model_dump()
+        }
+
+        return Knowledges.update_knowledge_meta_by_id(id, meta=metadata)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=ERROR_MESSAGES.UNAUTHORIZED,
         )
