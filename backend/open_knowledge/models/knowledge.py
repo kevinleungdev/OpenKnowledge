@@ -56,8 +56,8 @@ class Knowledge(Base):
     updated_at = Column(BigInteger)
 
 
-class RetrivalSetting(BaseModel):
-    retrival_mode: Literal["hybrid", "semantic", "keyword"] = None
+class RetrievalSetting(BaseModel):
+    retrieval_mode: Literal["hybrid", "semantic", "keyword"] = None
 
     hybrid_mode: Literal["weight", "rerank"] = None,
     weight_keyword_score: Optional[float] = 0.3,
@@ -75,7 +75,7 @@ class KnowledgeSetting(BaseModel):
     embedding_model: Optional[str] = None,
     index_mode: Literal["high_quality", "economical"] = None,
 
-    retrival_setting: Optional[RetrivalSetting] = None,
+    retrieval_setting: Optional[RetrievalSetting] = None,
 
     model_config = ConfigDict(extra="ignore")
 
