@@ -5,6 +5,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 
+from open_knowledge.routers.retrieval import ProcessFileForm, process_file
 from open_knowledge.models import knowledge
 from open_knowledge.utils.auth import get_verified_user
 from open_knowledge.models.knowledge import (
@@ -194,7 +195,33 @@ async def add_file_to_knowledge_by_id(
         )
 
     # Add content to the vector database
-    # TODO
+    try:
+        if file.meta and "chunk_settings" in file.meta:
+            chunk_settings = file.meta.get("chunk_settings")
+
+        if (
+            knowledge.meta and "settings" in knowledge.meta
+            and "embedding_config" in knowledge.meta.get("settings")
+        ):
+            embedding_config = knowledge.meta["settings"]["embedding_config"]
+
+        if chunk_settings and embedding_config:
+            process_file(
+                request,
+                ProcessFileForm(file_id=form_data.file_id, collection_name=id),
+                chunk_settings=chunk_settings,
+                embedding_config=embedding_config,
+                user=user,
+            )
+        else:
+            log.warning(
+                "Skip adding content to the vector database since 'chunk_settings' or 'embedding_config is empty")
+    except Exception as e:
+        log.debug(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
     if knowledge:
         data = knowledge.data or {}

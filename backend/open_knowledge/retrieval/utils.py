@@ -3,12 +3,12 @@ import logging
 import requests
 
 from urllib.parse import quote
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Sequence
 
 from langchain_core.documents.compressor import BaseDocumentCompressor
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.documents import Document
-from langchain_core.callbacks import CallbackManagerForRetrieverRun
+from langchain_core.callbacks import Callbacks, CallbackManagerForRetrieverRun
 from langchain_classic.retrievers import ContextualCompressionRetriever, EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
 
@@ -73,7 +73,7 @@ class RerankCompressor(BaseDocumentCompressor):
         self,
         documents: Sequence[Document],
         query: str,
-        callbacks: Callbacks | None = None,
+        callbacks: Optional[Callbacks] = None,
     ) -> Sequence[Document]:
         reranking = True if self.reranking_function else False
 

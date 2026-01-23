@@ -56,12 +56,26 @@ class Knowledge(Base):
     updated_at = Column(BigInteger)
 
 
-class RetrievalSetting(BaseModel):
-    retrieval_mode: Literal["hybrid", "semantic", "keyword"] = None
+class EmbeddingConfig(BaseModel):
+    engine: str = "jina"
+    model: str
 
-    hybrid_mode: Literal["weight", "rerank"] = None,
-    weight_keyword_score: Optional[float] = 0.3,
-    rerank_model: Optional[str] = None,
+    model_config = ConfigDict(extra="allow")
+
+
+class HybridSearchConfig(BaseModel):
+    rerank_mode: Literal["score", "rerank"] = "rerank"
+
+    rerank_engine: str = "jina",
+    rerank_model: str = None,
+
+    keyword_score: Optional[float] = 0.3,
+
+
+class RetrievalConfig(BaseModel):
+    search_mode: Literal["hybrid", "semantic", "keyword"] = None
+
+    hybrid_search_config: Optional[HybridSearchConfig] = None,
 
     top_k: int = 5,
     score_threshold: float = 0.5,
@@ -71,11 +85,10 @@ class RetrievalSetting(BaseModel):
 
 class KnowledgeSetting(BaseModel):
     chunk_mode: Optional[Literal["general", "parent_child"]] = None,
-
-    embedding_model: Optional[str] = None,
     index_mode: Literal["high_quality", "economical"] = None,
 
-    retrieval_setting: Optional[RetrievalSetting] = None,
+    embedding_config: Optional[EmbeddingConfig] = None,
+    retrieval_config: Optional[RetrievalConfig] = None,
 
     model_config = ConfigDict(extra="ignore")
 
