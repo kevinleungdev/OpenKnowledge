@@ -4,5 +4,8 @@
 # VS Code configuration
 .vscode/
 
+# Codebuddy stuff
+.codebuddy/
+
 # Data folder
 data/
