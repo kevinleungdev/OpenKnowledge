@@ -1,7 +1,7 @@
 {
     "dependencies": ["."],
     "graphs": {
-        "mock_agent": "./open_knowledge/agents/mock.py:graph"
+        "mock_agent": "./open_knowledge/agents/mock.py:mock_agent"
     },
     "http": {
         "app": "./open_knowledge/main.py:app"

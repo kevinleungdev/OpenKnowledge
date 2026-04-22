@@ -14,7 +14,6 @@ def server(
     host: str = "0.0.0.0",
     port: int = 8080,
 ):
-    import open_knowledge.main
     from open_knowledge.env import UVICORN_WORKERS
 
     uvicorn.run(
