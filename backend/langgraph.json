@@ -1,0 +1,10 @@
+{
+    "dependencies": ["."],
+    "graphs": {
+        "mock_agent": "./open_knowledge/agents/mock.py:graph"
+    },
+    "http": {
+        "app": "./open_knowledge/main.py:app"
+    },
+    "env": ".env"
+}

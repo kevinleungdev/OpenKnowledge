@@ -78,3 +78,5 @@ npm-debug.log*
 
 notebooks/
 notebook/
+
+.langgraph_api/

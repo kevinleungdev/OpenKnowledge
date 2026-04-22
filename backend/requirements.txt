@@ -17,5 +17,11 @@ sentence-transformers==5.1.1
 
 supabase==2.22.1
 
-langchain==1.2.3
+langchain==1.2.15
 langchain-community==0.4.1
+langgraph==1.1.8
+langgraph-cli[inmem]==0.4.23
+
+langchain-deepseek==1.0.1
+langchain-openai==1.1.16
+langchain-anthropic==1.4.1

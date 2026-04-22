@@ -1,10 +1,8 @@
 import os
 import logging
-from shutil import ExecError
 import sys
 
 from pathlib import Path
-from tkinter import NO
 
 ####################################
 # Load .env file
@@ -25,7 +23,7 @@ BASE_DIR = BACKEND_DIR.parent
 try:
     from dotenv import load_dotenv, find_dotenv
 
-    load_dotenv(find_dotenv(str(BASE_DIR / ".env")))
+    load_dotenv(find_dotenv(str(BACKEND_DIR / ".env")))
 except ImportError:
     print("dotenv not installed, skipping...")
 
@@ -75,8 +73,7 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", BASE_DIR / "data")).resolve()
 ####################################
 
 ENABLE_FORWARD_USER_INFO_HEADERS = (
-    os.environ.get("ENABLE_FORWARD_USER_INFO_HEADERS",
-                   "False").lower() == "true"
+    os.environ.get("ENABLE_FORWARD_USER_INFO_HEADERS", "False").lower() == "true"
 )
 
 
@@ -84,8 +81,7 @@ ENABLE_FORWARD_USER_INFO_HEADERS = (
 # Database
 ####################################
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL", f"sqlite:///{DATA_DIR}/knowledgebase.db")
+DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DATA_DIR}/knowledgebase.db")
 
 DATABASE_TYPE = os.environ.get("DATABASE_TYPE")
 DATABASE_USER = os.environ.get("DATABASE_USER")
@@ -240,9 +236,7 @@ except ValueError:
 
 WEBUI_SECRET_KEY = os.environ.get(
     "WEBUI_SECRET_KEY",
-    os.environ.get(
-        "WEBUI_JWT_SECRET_KEY", "t0p-s3cr3t"
-    ),
+    os.environ.get("WEBUI_JWT_SECRET_KEY", "t0p-s3cr3t"),
 )
 
 WEBUI_ADMIN_USER = os.environ.get(
@@ -262,8 +256,7 @@ S3_REGION_NAME = os.environ.get("S3_REGION_NAME", None)
 S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", None)
 S3_KEY_PREFIX = os.environ.get("S3_KEY_PREFIX", None)
 S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", None)
-S3_ENABLE_TAGGING = os.environ.get(
-    "S3_ENABLE_TAGGING", "false").lower() == "true"
+S3_ENABLE_TAGGING = os.environ.get("S3_ENABLE_TAGGING", "false").lower() == "true"
 
 
 ####################################
@@ -307,5 +300,6 @@ RAG_EMBEDDING_MODEL = os.environ.get("RAG_EMBEDDING_MODEL", None)
 RAG_RERANKING_MODEL = os.environ.get("RAG_RERANKING_MODEL", None)
 
 RAG_JINA_API_BASE_URL = os.environ.get(
-    "RAG_JINA_API_BASE_URL", "https://api.jina.ai/v1/")
+    "RAG_JINA_API_BASE_URL", "https://api.jina.ai/v1/"
+)
 RAG_JINA_API_KEY = os.environ.get("RAG_JINA_API_KEY", None)
