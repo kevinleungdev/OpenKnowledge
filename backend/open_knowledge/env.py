@@ -160,12 +160,23 @@ VECTOR_DB = os.environ.get("VECTOR_DB", "pgvector")
 # Pgvector
 PGVECTOR_DB_URL = os.getenv("PGVECTOR_DB_URL", DATABASE_URL)
 
+# SQLite-vec: a local, dependency-free vector store for demo/offline use.
+# Defaults to the primary DATABASE_URL (the same SQLite file) when unset.
+SQLITE_VEC_DB_URL = os.getenv("SQLITE_VEC_DB_URL", DATABASE_URL)
+
 if VECTOR_DB == "pgvector" and not PGVECTOR_DB_URL.startswith("postgres"):
     raise ValueError(
         "Pgvector requires setting PGVECTOR_DB_URL or using Postgres with vector extension as the primary database."
     )
 PGVECTOR_INITIALIZE_MAX_VECTOR_LENGTH = int(
     os.getenv("PGVECTOR_INITIALIZE_MAX_VECTOR_LENGTH", 1536)
+)
+
+# Backend-agnostic vector dimension shared by every vector store (pgvector,
+# sqlite-vec, and future Milvus/Chroma backends). Defaults to the pgvector
+# setting so existing deployments keep the same embedding size.
+VECTOR_INITIALIZE_MAX_VECTOR_LENGTH = int(
+    os.getenv("VECTOR_INITIALIZE_MAX_VECTOR_LENGTH", PGVECTOR_INITIALIZE_MAX_VECTOR_LENGTH)
 )
 
 PGVECTOR_PGCRYPTO = os.getenv("PGVECTOR_PGCRYPTO", "false").lower() == "true"
@@ -283,6 +294,16 @@ RAG_ALLOWED_FILE_EXTENSIONS = [
 ####################################
 
 ENV = os.environ.get("ENV", "dev")
+
+# Echo every executed SQL statement (with bound params) via the sqlalchemy.engine
+# logger. On by default in dev, off in every other environment. Override
+# explicitly with SQLALCHEMY_ECHO=true|false.
+_sqlalchemy_echo_raw = os.environ.get("SQLALCHEMY_ECHO", "").lower()
+if _sqlalchemy_echo_raw in ("", "auto"):
+    SQLALCHEMY_ECHO = ENV == "dev"
+else:
+    SQLALCHEMY_ECHO = _sqlalchemy_echo_raw in ("1", "true", "yes", "on")
+log.info(f"SQLALCHEMY_ECHO: {SQLALCHEMY_ECHO} (ENV={ENV})")
 
 
 ####################################

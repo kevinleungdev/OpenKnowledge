@@ -66,29 +66,29 @@ class EmbeddingConfig(BaseModel):
 class HybridSearchConfig(BaseModel):
     rerank_mode: Literal["score", "rerank"] = "rerank"
 
-    rerank_engine: str = "jina",
-    rerank_model: str = None,
+    rerank_engine: str = "jina"
+    rerank_model: Optional[str] = None
 
-    keyword_score: Optional[float] = 0.3,
+    keyword_score: Optional[float] = 0.3
 
 
 class RetrievalConfig(BaseModel):
-    search_mode: Literal["hybrid", "semantic", "keyword"] = None
+    search_mode: Optional[Literal["hybrid", "semantic", "keyword"]] = None
 
-    hybrid_search_config: Optional[HybridSearchConfig] = None,
+    hybrid_search_config: Optional[HybridSearchConfig] = None
 
-    top_k: int = 5,
-    score_threshold: float = 0.5,
+    top_k: int = 5
+    score_threshold: float = 0.5
 
     model_config = ConfigDict(extra="ignore")
 
 
 class KnowledgeSetting(BaseModel):
-    chunk_mode: Optional[Literal["general", "parent_child"]] = None,
-    index_mode: Literal["high_quality", "economical"] = None,
+    chunk_mode: Optional[Literal["general", "parent_child"]] = None
+    index_mode: Optional[Literal["high_quality", "economical"]] = None
 
-    embedding_config: Optional[EmbeddingConfig] = None,
-    retrieval_config: Optional[RetrievalConfig] = None,
+    embedding_config: Optional[EmbeddingConfig] = None
+    retrieval_config: Optional[RetrievalConfig] = None
 
     model_config = ConfigDict(extra="ignore")
 

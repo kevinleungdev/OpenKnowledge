@@ -17,6 +17,7 @@ from open_knowledge.env import (
     DATABASE_POOL_RECYCLE,
     DATABASE_POOL_TIMEOUT,
     SRC_LOG_LEVELS,
+    SQLALCHEMY_ECHO,
 )
 
 
@@ -51,23 +52,45 @@ class JSONField(types.TypeDecorator):
 
 
 SQLALCHEMY_DATABASE_URL = DATABASE_URL
+IS_SQLITE = SQLALCHEMY_DATABASE_URL.startswith("sqlite")
 
-if isinstance(DATABASE_POOL_SIZE, int):
-    if DATABASE_POOL_SIZE > 0:
-        engine = create_engine(
-            SQLALCHEMY_DATABASE_URL,
-            pool_size=DATABASE_POOL_SIZE,
-            max_overflow=DATABASE_POOL_MAX_OVERFLOW,
-            pool_recycle=DATABASE_POOL_RECYCLE,
-            pool_timeout=DATABASE_POOL_TIMEOUT,
-            pool_pre_ping=True,
-            poolclass=QueuePool,
-        )
-    else:
-        engine = create_engine(SQLALCHEMY_DATABASE_URL,
-                               pool_pre_ping=True, poolclass=NullPool)
+if IS_SQLITE:
+    # SQLite (local demo mode): threadsafe across request threads, no pooling,
+    # and foreign-key enforcement enabled per connection.
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=NullPool,
+    )
+
+    @event.listens_for(engine, "connect")
+    def _enable_sqlite_pragma(dbapi_conn, _record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 else:
-    engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+    if isinstance(DATABASE_POOL_SIZE, int):
+        if DATABASE_POOL_SIZE > 0:
+            engine = create_engine(
+                SQLALCHEMY_DATABASE_URL,
+                pool_size=DATABASE_POOL_SIZE,
+                max_overflow=DATABASE_POOL_MAX_OVERFLOW,
+                pool_recycle=DATABASE_POOL_RECYCLE,
+                pool_timeout=DATABASE_POOL_TIMEOUT,
+                pool_pre_ping=True,
+                poolclass=QueuePool,
+            )
+        else:
+            engine = create_engine(SQLALCHEMY_DATABASE_URL,
+                                   pool_pre_ping=True, poolclass=NullPool)
+    else:
+        engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+
+# Echo all executed SQL (statements + bound params) by enabling the sqlalchemy.engine
+# logger. Driven by SQLALCHEMY_ECHO (on by default in dev, off elsewhere). INFO
+# logs queries + params; bump to DEBUG to also log result rows.
+if SQLALCHEMY_ECHO:
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -75,7 +98,10 @@ SessionLocal = sessionmaker(
     bind=engine,
     expire_on_commit=False
 )
-metadata_obj = MetaData(schema=DATABASE_SCHEMA)
+# SQLite has no schema namespace and the alembic migrations create unqualified
+# tables; keep the ORM MetaData unqualified on SQLite, preserve DATABASE_SCHEMA
+# (e.g. "public") for Postgres.
+metadata_obj = MetaData(schema=None if IS_SQLITE else DATABASE_SCHEMA)
 Base = declarative_base(metadata=metadata_obj)
 Session = scoped_session(SessionLocal)
 

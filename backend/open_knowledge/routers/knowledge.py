@@ -217,7 +217,7 @@ async def add_file_to_knowledge_by_id(
             log.warning(
                 "Skip adding content to the vector database since 'chunk_settings' or 'embedding_config is empty")
     except Exception as e:
-        log.debug(e)
+        log.exception("Failed to add content to the vector database")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)

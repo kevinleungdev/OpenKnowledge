@@ -93,7 +93,7 @@ class LoacalStorageProvider(StorageProvider):
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                 except Exception as e:
-                    log.error(f"Failed to delete {file_path}. Reason: {e}")
+                    log.exception(f"Failed to delete {file_path}")
         else:
             log.warning(f"Directory {UPLOAD_DIR} not found in local storage.")
 

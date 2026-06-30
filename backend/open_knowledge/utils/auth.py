@@ -10,7 +10,9 @@ from uu import decode, encode
 from fastapi import BackgroundTasks, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from open_knowledge.models.users import Users
+from uuid import UUID
+
+from open_knowledge.models.users import Users, UserModel, UserInfoModel
 from open_knowledge.env import SRC_LOG_LEVELS, WEBUI_SECRET_KEY, ENV, WEBUI_ADMIN_USER
 from open_knowledge.constants import ERROR_MESSAGES
 
@@ -65,6 +67,26 @@ def get_http_authorization_cred(auth_header: Optional[str]):
         return None
 
 
+def get_fake_user() -> UserModel:
+    """Hardcoded admin user for local demo mode (ENV == 'dev').
+
+    Replaces Supabase-backed auth: no DB lookup, no auth.users table. The id
+    reuses WEBUI_ADMIN_USER so config remains the single source of truth.
+    """
+    admin_id = UUID(WEBUI_ADMIN_USER)
+    user_info = UserInfoModel(
+        id=0,
+        username="admin",
+        role="admin",
+        user_id=admin_id,
+    )
+    return UserModel(
+        id=admin_id,
+        email="admin@open-knowledge.local",
+        user_info=user_info,
+    )
+
+
 def get_current_user(
     request: Request,
     response: Response,
@@ -72,15 +94,9 @@ def get_current_user(
     auth_token: HTTPAuthorizationCredentials = Depends(bearer_security),
 ):
     if ENV == "dev":
-        # Disable authentication
-        user = Users.get_user_by_id(WEBUI_ADMIN_USER)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"User `{WEBUI_ADMIN_USER}` not found"
-            )
-        else:
-            return user
+        # Local demo mode: skip Supabase auth entirely and return a hardcoded
+        # admin user (no DB lookup, no auth.users table dependency).
+        return get_fake_user()
     else:
         token = None
 

@@ -16,6 +16,10 @@ class Vector:
                 from open_knowledge.retrieval.vector.dbs.pgvector import PgvectorClient
 
                 return PgvectorClient()
+            case VectorType.SQLITE_VEC:
+                from open_knowledge.retrieval.vector.dbs.sqlite_vec import SQLiteVecClient
+
+                return SQLiteVecClient()
             case _:
                 raise ValueError(f"Unsupported vector type: {vector_type}")
             

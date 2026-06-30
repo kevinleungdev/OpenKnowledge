@@ -134,7 +134,7 @@ class FilesTable:
                 else:
                     return None
             except Exception as e:
-                log.error(f"Error inserting new file: {e}")
+                log.exception("Error inserting new file")
                 return None
 
     def get_file_by_id(self, id: str) -> Optional[FileModel]:

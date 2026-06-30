@@ -105,6 +105,13 @@ class UserModel(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @property
+    def role(self) -> str | None:
+        # Convenience accessor used by some routers (`user.role == "admin"`).
+        # Delegates to the underlying UserInfo so it works for both DB-backed
+        # and fake users.
+        return self.user_info.role if self.user_info else None
+
 
 ####################
 # Forms
@@ -174,7 +181,7 @@ class UsersTable:
                 user = db.query(User).filter_by(id=id).first()
                 return UserModel.model_validate(user)
         except Exception as e:
-            log.error(f"Failed to fetch the user {id}: {e}")
+            log.exception(f"Failed to fetch the user {id}")
             return None
 
     def get_user_by_email(self, email: str) -> Optional[UserModel]:
@@ -183,7 +190,7 @@ class UsersTable:
                 user = db.query(User).filter_by(email=email).first()
                 return UserModel.model_validate(user)
         except Exception as e:
-            log.error(f"Failed to fetch the user by email {email}: {e}")
+            log.exception(f"Failed to fetch the user by email {email}")
             return None
 
     def update_user_role_by_id(self, id: str, role: str) -> Optional[UserModel]:
