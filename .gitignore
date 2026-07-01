@@ -1,11 +1,15 @@
 .env
 .env.*
+skills-lock.json
 
 # VS Code configuration
 .vscode/
 
 # Claude stuff
 .claude/
+
+# Agents stuff
+.agents/
 
 # Data folder
 data/
