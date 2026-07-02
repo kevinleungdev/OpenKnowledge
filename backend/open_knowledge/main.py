@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from open_knowledge.routers import files, knowledge
+from open_knowledge.routers import files, knowledge, retrieval
 from open_knowledge.env import DATA_DIR, ENV, GLOBAL_LOG_LEVEL, SRC_LOG_LEVELS
 
 
@@ -123,3 +123,5 @@ app.mount("/app", create_frontend_router(), name="frontend")
 
 app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["knowledge"])
 app.include_router(files.router, prefix="/api/v1/files", tags=["files"])
+
+app.include_router(retrieval.router, prefix="/api/v1/retrieval", tags=["retrieval"])

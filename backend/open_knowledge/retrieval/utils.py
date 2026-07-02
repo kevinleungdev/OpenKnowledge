@@ -79,6 +79,10 @@ class RerankCompressor(BaseDocumentCompressor):
 
         if reranking:
             docs_with_scores = self.reranking_function(query, documents)
+            # Reranker returns None on API failure (already logged). Degrade to no
+            # results rather than crashing on the threshold/sort steps below.
+            if docs_with_scores is None:
+                return []
         else:
             from sentence_transformers import util
 
@@ -148,6 +152,20 @@ def get_doc(collection_name: str, user: UserModel = None):
         raise e
 
 
+def has_doc(collection_name: str, user: UserModel = None):
+    try:
+        log.debug(f"has_doc:doc {collection_name}")
+
+        result = VECTOR_DB_CLIENT.has_collection(collection_name=collection_name)
+        if result:
+            log.info(f"has_doc:result {result}")
+
+        return result
+    except Exception as e:
+        log.exception(f"Error has doc {collection_name}: {e}")
+        raise e
+
+
 def query_doc_with_hybrid_search(
     collection_name: str,
     collection_result: GetResult,
@@ -202,7 +220,7 @@ def query_doc_with_hybrid_search(
 
         result = compression_retriver.invoke(query)
 
-        distances = [d.metadata.get["score"] for d in result]
+        distances = [d.metadata["score"] for d in result]
         documents = [d.page_content for d in result]
         metadatas = [d.metadata for d in result]
 
@@ -356,7 +374,7 @@ def get_reranking_function(
             query=query,
             documents=documents if isinstance(
                 documents, list) else [documents],
-            top_k=len(documents) if isinstance(documents) else 1,
+            top_k=len(documents) if isinstance(documents, list) else 1,
             user=user,
         )
     else:
@@ -368,11 +386,24 @@ def generate_jina_reranking_scores(
     url: str,
     key: str,
     query: str,
-    documents: list[str],
+    documents: list,
     top_k: int,
     user: Optional[UserModel] = None,
 ):
-    """Use Jina's reranker API for final relevance scoring."""
+    """Use Jina's reranker API for final relevance scoring.
+
+    Accepts a list of LangChain ``Document`` objects (or plain strings) and
+    returns ``[(document, score), ...]`` pairs, preserving the original
+    document objects so callers can read their ``.metadata``/``.page_content``.
+    """
+    if not isinstance(documents, list):
+        documents = [documents]
+
+    # Jina's rerank API expects plain text strings, not Document objects.
+    texts = [
+        d.page_content if hasattr(d, "page_content") else d for d in documents
+    ]
+
     reranker_url = f"{url}rerank" if url.endswith("/") else f"{url}/rerank"
     log.debug(f"Jina reranker url: {reranker_url}")
 
@@ -394,7 +425,7 @@ def generate_jina_reranking_scores(
     json_data = {
         "model": model,
         "query": query,
-        "documents": documents,
+        "documents": texts,
         "top_n": top_k,
     }
 
@@ -405,8 +436,14 @@ def generate_jina_reranking_scores(
     )
 
     if res.status_code == 200:
-        results = res["results"]
-        return [(result["document"]["text"], reulst["relevance_score"]) for result in results]
+        # Jina returns {"results": [{"index": <int>, "relevance_score": <float>, ...}]}.
+        # Pair each score back to the original document by index.
+        results = res.json().get("results", [])
+        return [
+            (documents[r["index"]], r["relevance_score"])
+            for r in results
+            if "index" in r and "relevance_score" in r
+        ]
     else:
         log.warning(
             f"Erro invoking Jina Reranker api. status: {res.status_code}, message: {res.text}")
