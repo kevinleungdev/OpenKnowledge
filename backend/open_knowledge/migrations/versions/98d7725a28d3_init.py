@@ -24,20 +24,9 @@ def upgrade() -> None:
     existing_tables = get_existing_tables()
 
     """Upgrade schema."""
-    if "document" not in existing_tables:
-        op.create_table(
-            "document",
-            sa.Column("collection_name", sa.String(), nullable=False),
-            sa.Column("name", sa.String(), nullable=True),
-            sa.Column("title", sa.Text(), nullable=True),
-            sa.Column("filename", sa.Text(), nullable=True),
-            sa.Column("content", sa.Text(), nullable=True),
-            sa.Column("user_id", sa.String(), nullable=True),
-            sa.Column("timestamp", sa.BigInteger(), nullable=True),
-            sa.PrimaryKeyConstraint("collection_name"),
-            sa.UniqueConstraint("name"),
-        )
-
+    # `file` includes the `hash` column (Text, nullable). This was previously
+    # added by a follow-up migration (6155d3fbbbca) to backfill older DBs;
+    # folded into the initial create here.
     if "file" not in existing_tables:
         op.create_table(
             "file",
@@ -54,8 +43,27 @@ def upgrade() -> None:
             sa.PrimaryKeyConstraint("id"),
         )
 
+    # `knowledge` was previously created in a later migration (2c8b64f21f16);
+    # merged here so a from-scratch `alembic upgrade head` builds the full
+    # schema in one step. Columns mirror models/knowledge.py.
+    if "knowledge" not in existing_tables:
+        op.create_table(
+            "knowledge",
+            sa.Column("id", sa.Text(), nullable=False),
+            sa.Column("user_id", sa.Text(), nullable=True),
+            sa.Column("name", sa.Text(), nullable=True),
+            sa.Column("description", sa.Text(), nullable=True),
+            sa.Column("meta", sa.JSON(), nullable=True),
+            sa.Column("data", sa.JSON(), nullable=True),
+            sa.Column("access_control", sa.JSON(), nullable=True),
+            sa.Column("created_at", sa.BigInteger(), nullable=True),
+            sa.Column("updated_at", sa.BigInteger(), nullable=True),
+            sa.PrimaryKeyConstraint("id"),
+            sa.UniqueConstraint("id"),
+        )
+
 
 def downgrade() -> None:
     """Downgrade schema."""
+    op.drop_table("knowledge")
     op.drop_table("file")
-    op.drop_table("document")
