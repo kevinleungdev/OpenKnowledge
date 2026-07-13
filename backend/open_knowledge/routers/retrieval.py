@@ -248,6 +248,11 @@ def process_file(
                     file.filename, file.meta.get("content_type", ""), file.path
                 )
 
+                if not docs:
+                    raise Exception(
+                        f"Could not extract text from '{file.filename}'"
+                    )
+
                 text_content = " ".join([doc.page_content for doc in docs])
 
         log.debug(f"text_content: {text_content}")

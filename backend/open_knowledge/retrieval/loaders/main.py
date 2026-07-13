@@ -1,3 +1,4 @@
+import locale
 import logging
 import sys
 
@@ -65,6 +66,24 @@ known_source_ext = [
 ]
 
 
+def _read_text_file(path: str) -> str:
+    """Read a text file as a string, tolerant of encodings.
+
+    `open()` without an encoding uses the locale default (GBK/cp936 on
+    Chinese Windows), which raises UnicodeDecodeError on files that aren't
+    valid in that encoding - e.g. UTF-8 files, or Windows-1252 text with
+    curly quotes (byte 0x94). Try UTF-8 first, then the locale default for
+    legacy text, then latin-1 which decodes any byte stream without raising.
+    """
+    for enc in ("utf-8", locale.getpreferredencoding(False), "latin-1"):
+        try:
+            with open(path, encoding=enc) as f:
+                return f.read()
+        except UnicodeDecodeError:
+            continue
+    return ""  # unreachable: latin-1 never raises
+
+
 class Loader:
     def __init__(self) -> None:
         pass
@@ -78,13 +97,11 @@ class Loader:
             local_file_path = Storage.get_file(file_path)
             log.debug(f"Download file: {local_file_path}")
 
-            with open(local_file_path) as f:
-                doc = Document(
-                    page_content=f.read(),
-                )
-            return [doc]
+            content = _read_text_file(local_file_path)
+            return [Document(page_content=content)]
         except Exception as e:
             log.exception(f"Error loading document {file_path}: {e}")
+            return []
 
     def _is_text_file(self, file_ext: str, file_content_type: str) -> bool:
         return file_ext in known_source_ext or (
