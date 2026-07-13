@@ -1,4 +1,3 @@
-from curses import meta
 import logging
 
 from typing import List, Optional
