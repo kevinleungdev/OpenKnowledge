@@ -1,5 +1,6 @@
 import operator
 import logging
+import math
 import requests
 
 from urllib.parse import quote
@@ -59,6 +60,30 @@ class VectorSearchRetriever(BaseRetriever):
         return results
 
 
+def cosine_similarity(
+    query: list[float], documents: list[list[float]]
+) -> list[float]:
+    """Cosine similarity of one query vector against each document vector.
+
+    Pure-Python replacement for ``sentence_transformers.util.cos_sim`` so the
+    reranker-less fallback in :class:`RerankCompressor` doesn't pull in
+    sentence-transformers (and its torch dependency).
+    """
+    q_norm = math.sqrt(sum(x * x for x in query))
+    if q_norm == 0:
+        return [0.0] * len(documents)
+
+    scores = []
+    for doc in documents:
+        d_norm = math.sqrt(sum(x * x for x in doc))
+        if d_norm == 0:
+            scores.append(0.0)
+            continue
+        dot = sum(q * d for q, d in zip(query, doc))
+        scores.append(dot / (q_norm * d_norm))
+    return scores
+
+
 class RerankCompressor(BaseDocumentCompressor):
     embedding_function: Any
     reranking_function: Any
@@ -84,18 +109,16 @@ class RerankCompressor(BaseDocumentCompressor):
             if docs_with_scores is None:
                 return []
         else:
-            from sentence_transformers import util
-
+            # No reranker configured: fall back to cosine similarity
+            # between the query and document embeddings. Inline impl so
+            # the reranker-less path doesn't need sentence-transformers.
             query_embedding = self.embedding_function(query)
-            document_embedding = self.embedding_function(
+            document_embeddings = self.embedding_function(
                 [doc.page_content for doc in documents]
             )
-            scores = util.cos_sim(query_embedding, document_embedding)[0]
+            scores = cosine_similarity(query_embedding, document_embeddings)
 
-            docs_with_scores = list(
-                zip(documents, scores.tolist()
-                    if not isinstance(scores, list) else scores)
-            )
+            docs_with_scores = list(zip(documents, scores))
 
         if self.r_score:
             docs_with_scores = [

@@ -13,11 +13,6 @@ pgvector==0.4.1
 sqlite-vec
 PyJWT==2.10.1
 
-transformers==4.57.1
-sentence-transformers==5.1.1
-
-supabase==2.22.1
-
 langchain==1.2.15
 langchain-community==0.4.1
 rank-bm25==0.2.2
