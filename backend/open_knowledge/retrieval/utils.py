@@ -16,7 +16,11 @@ from langchain_community.retrievers import BM25Retriever
 
 from open_knowledge.env import (
     ENABLE_FORWARD_USER_INFO_HEADERS,
+    RAG_DASHSCOPE_API_KEY,
+    RAG_DASHSCOPE_EMBEDDING_BATCH_SIZE,
     RAG_EMBEDDING_PREFIX_FIELD_NAME,
+    RAG_JINA_API_BASE_URL,
+    RAG_JINA_API_KEY,
     SRC_LOG_LEVELS,
 )
 from open_knowledge.models.users import UserModel
@@ -272,13 +276,27 @@ def query_doc_with_hybrid_search(
         raise e
 
 
+def resolve_credentials(engine: str) -> tuple[Optional[str], Optional[str]]:
+    """Resolve the (url, key) pair for an embedding/reranking engine.
+
+    Jina needs a base URL (its generators append ``embeddings``/``rerank``);
+    DashScope uses the official SDK, which owns the endpoint, so only the API
+    key is returned and ``url`` is None.
+    """
+    if engine == "jina":
+        return RAG_JINA_API_BASE_URL, RAG_JINA_API_KEY
+    if engine == "dashscope":
+        return None, RAG_DASHSCOPE_API_KEY
+    raise ValueError(f"Unknown engine: {engine}")
+
+
 def get_embedding_function(
     embedding_engine,
     embedding_model,
     url,
     key,
 ):
-    if embedding_engine == "jina":
+    if embedding_engine in ("jina", "dashscope"):
         return lambda query, prefix=None, task=None, user=None: generate_embeddings(
             engine=embedding_engine,
             model=embedding_model,
@@ -289,7 +307,7 @@ def get_embedding_function(
             user=user,
         )
     else:
-        raise ValueError(f"Unknow embedding engine")
+        raise ValueError(f"Unknown embedding engine: {embedding_engine}")
 
 
 def generate_embeddings(
@@ -310,19 +328,31 @@ def generate_embeddings(
         else:
             text = f"{prefix}{text}"
 
+    texts = text if isinstance(text, list) else [text]
+
     if engine == "jina":
         embeddings = generate_jina_batch_embeddings(
-            **{
-                "model": model,
-                "texts": text if isinstance(text, list) else [text],
-                "url": url,
-                "key": key,
-                "prefix": prefix,
-                "task": task,
-                "user": user,
-            }
+            model=model,
+            texts=texts,
+            url=url,
+            key=key,
+            prefix=prefix,
+            task=task,
+            user=user,
         )
-        return embeddings[0] if isinstance(text, str) else embeddings
+    elif engine == "dashscope":
+        embeddings = generate_dashscope_batch_embeddings(
+            model=model,
+            texts=texts,
+            key=key,
+            user=user,
+        )
+    else:
+        raise ValueError(f"Unknown embedding engine: {engine}")
+
+    if embeddings is None:
+        return None
+    return embeddings[0] if isinstance(text, str) else embeddings
 
 
 def generate_jina_batch_embeddings(
@@ -383,6 +413,65 @@ def generate_jina_batch_embeddings(
         return None
 
 
+def generate_dashscope_batch_embeddings(
+    model: str,
+    texts: list[str],
+    key: str,
+    user: Optional[UserModel] = None,
+) -> Optional[list[list[float]]]:
+    """Embed ``texts`` via the AliCloud DashScope SDK (``dashscope.TextEmbedding``).
+
+    DashScope caps the number of inputs per request and the SDK does not
+    auto-batch, so input is chunked by ``RAG_DASHSCOPE_EMBEDDING_BATCH_SIZE``
+    and the per-batch vectors are concatenated, preserving input order via each
+    result's ``text_index``. Returns ``None`` on failure so callers can degrade,
+    mirroring :func:`generate_jina_batch_embeddings`.
+    """
+    try:
+        from dashscope import TextEmbedding
+    except ImportError as e:
+        log.exception(f"dashscope SDK not installed; cannot embed: {e}")
+        return None
+
+    batch_size = max(1, RAG_DASHSCOPE_EMBEDDING_BATCH_SIZE)
+    all_embeddings: list[list[float]] = []
+
+    try:
+        for start in range(0, len(texts), batch_size):
+            batch = texts[start:start + batch_size]
+            log.debug(
+                f"generate_dashscope_batch_embeddings: model {model} "
+                f"batch size {len(batch)}"
+            )
+            resp = TextEmbedding.call(
+                model=model,
+                input=batch,
+                api_key=key or None,
+            )
+
+            if resp.status_code != 200:
+                log.warning(
+                    f"DashScope embedding error: status={resp.status_code} "
+                    f"code={getattr(resp, 'code', '')} "
+                    f"message={getattr(resp, 'message', '')}"
+                )
+                return None
+
+            # output["embeddings"] -> [{"text_index": int, "embedding": [...]}]
+            embeddings_by_index = {
+                e["text_index"]: e["embedding"]
+                for e in resp.output["embeddings"]
+            }
+            all_embeddings.extend(
+                embeddings_by_index[i] for i in range(len(batch))
+            )
+
+        return all_embeddings
+    except Exception as e:
+        log.exception(f"Error generating dashscope batch embeddings: {e}")
+        return None
+
+
 def get_reranking_function(
     reranking_engine: str,
     reranking_model: str,
@@ -400,8 +489,18 @@ def get_reranking_function(
             top_k=len(documents) if isinstance(documents, list) else 1,
             user=user,
         )
+    elif reranking_engine == "dashscope":
+        return lambda query, documents, user=None: generate_dashscope_reranking_scores(
+            model=reranking_model,
+            key=key,
+            query=query,
+            documents=documents if isinstance(
+                documents, list) else [documents],
+            top_k=len(documents) if isinstance(documents, list) else 1,
+            user=user,
+        )
     else:
-        raise ValueError(f"Unkown reranking engine: {reranking_engine}")
+        raise ValueError(f"Unknown reranking engine: {reranking_engine}")
 
 
 def generate_jina_reranking_scores(
@@ -470,4 +569,61 @@ def generate_jina_reranking_scores(
     else:
         log.warning(
             f"Erro invoking Jina Reranker api. status: {res.status_code}, message: {res.text}")
+        return None
+
+
+def generate_dashscope_reranking_scores(
+    model: str,
+    key: str,
+    query: str,
+    documents: list,
+    top_k: int,
+    user: Optional[UserModel] = None,
+):
+    """Use AliCloud DashScope's rerank SDK (e.g. qwen3-rerank, gte-rerank-v2).
+
+    Accepts a list of LangChain ``Document`` objects (or plain strings) and
+    returns ``[(document, score), ...]`` pairs, preserving the original
+    document objects so callers can read their ``.metadata``/``.page_content``.
+    Returns ``None`` on failure, matching the Jina path.
+    """
+    try:
+        from dashscope import TextReRank
+    except ImportError as e:
+        log.exception(f"dashscope SDK not installed; cannot rerank: {e}")
+        return None
+
+    if not isinstance(documents, list):
+        documents = [documents]
+
+    # DashScope expects plain text strings, not Document objects.
+    texts = [d.page_content if hasattr(d, "page_content") else d for d in documents]
+
+    try:
+        resp = TextReRank.call(
+            model=model,
+            query=query,
+            documents=texts,
+            top_n=top_k,
+            return_documents=False,
+            api_key=key or None,
+        )
+
+        if resp.status_code != 200:
+            log.warning(
+                f"Error invoking DashScope Reranker. status={resp.status_code} "
+                f"code={getattr(resp, 'code', '')} "
+                f"message={getattr(resp, 'message', '')}"
+            )
+            return None
+
+        # output["results"] -> [{"index": int, "relevance_score": float, ...}]
+        results = resp.output["results"]
+        return [
+            (documents[r["index"]], r["relevance_score"])
+            for r in results
+            if "index" in r and "relevance_score" in r
+        ]
+    except Exception as e:
+        log.exception(f"Error generating dashscope reranking scores: {e}")
         return None

@@ -314,13 +314,25 @@ RAG_EMBEDDING_PREFIX_FIELD_NAME = os.environ.get(
     "RAG_EMBEDDING_PREFIX_FIELD_NAME", None
 )
 
-RAG_EMBEDDING_ENGINE = os.environ.get("RAG_EMBEDDING_ENGINE", None)
-RAG_RERANKING_ENGINE = os.environ.get("RAG_RERANKING_ENGINE", None)
+RAG_EMBEDDING_ENGINE = os.environ.get("RAG_EMBEDDING_ENGINE", "dashscope")
+RAG_RERANKING_ENGINE = os.environ.get("RAG_RERANKING_ENGINE", "dashscope")
 
-RAG_EMBEDDING_MODEL = os.environ.get("RAG_EMBEDDING_MODEL", None)
-RAG_RERANKING_MODEL = os.environ.get("RAG_RERANKING_MODEL", None)
+RAG_EMBEDDING_MODEL = os.environ.get("RAG_EMBEDDING_MODEL", "text-embedding-v4")
+RAG_RERANKING_MODEL = os.environ.get("RAG_RERANKING_MODEL", "qwen3-rerank")
 
 RAG_JINA_API_BASE_URL = os.environ.get(
     "RAG_JINA_API_BASE_URL", "https://api.jina.ai/v1/"
 )
 RAG_JINA_API_KEY = os.environ.get("RAG_JINA_API_KEY", None)
+
+# AliCloud DashScope (official `dashscope` SDK) - the default embedding and
+# reranking engine. The SDK also reads DASHSCOPE_API_KEY from the environment
+# directly; RAG_DASHSCOPE_API_KEY mirrors the RAG_* convention and is passed
+# explicitly to each SDK call so the key lives alongside the other RAG settings.
+RAG_DASHSCOPE_API_KEY = os.environ.get("RAG_DASHSCOPE_API_KEY", None)
+
+# DashScope caps the number of texts per embedding request and the SDK does not
+# auto-batch, so the generator chunks input by this size and concatenates results.
+RAG_DASHSCOPE_EMBEDDING_BATCH_SIZE = int(
+    os.environ.get("RAG_DASHSCOPE_EMBEDDING_BATCH_SIZE", 25)
+)

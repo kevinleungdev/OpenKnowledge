@@ -57,7 +57,7 @@ class Knowledge(Base):
 
 
 class EmbeddingConfig(BaseModel):
-    engine: str = "jina"
+    engine: str = "dashscope"
     model: str
 
     model_config = ConfigDict(extra="allow")
@@ -66,7 +66,7 @@ class EmbeddingConfig(BaseModel):
 class HybridSearchConfig(BaseModel):
     rerank_mode: Literal["score", "rerank"] = "rerank"
 
-    rerank_engine: str = "jina"
+    rerank_engine: str = "dashscope"
     rerank_model: Optional[str] = None
 
     keyword_score: Optional[float] = 0.3

@@ -26,12 +26,11 @@ from open_knowledge.retrieval.utils import (
     get_doc,
     has_doc,
     query_doc_with_hybrid_search,
+    resolve_credentials,
 )
 from open_knowledge.retrieval.vector.factory import VECTOR_DB_CLIENT
 from open_knowledge.env import (
     SRC_LOG_LEVELS,
-    RAG_JINA_API_BASE_URL,
-    RAG_JINA_API_KEY,
     RAG_EMBEDDING_ENGINE,
     RAG_EMBEDDING_MODEL,
     RAG_RERANKING_ENGINE,
@@ -155,11 +154,12 @@ def save_docs_to_vector_db(
                 return True
 
         log.info(f"adding to collection {collection_name}")
+        embedding_url, embedding_key = resolve_credentials(embedding_config["engine"])
         embedding_function = get_embedding_function(
             embedding_config["engine"],
             embedding_config["model"],
-            url=RAG_JINA_API_BASE_URL,
-            key=RAG_JINA_API_KEY
+            url=embedding_url,
+            key=embedding_key,
         )
 
         embeddings = embedding_function(
@@ -385,11 +385,12 @@ def query_doc_handler(
         rerank_engine = hybrid_search_config.get("rerank_engine") or RAG_RERANKING_ENGINE
         rerank_model = hybrid_search_config.get("rerank_model") or RAG_RERANKING_MODEL
 
+        embedding_url, embedding_key = resolve_credentials(embedding_engine)
         embedding_function = get_embedding_function(
             embedding_engine,
             embedding_model,
-            url=RAG_JINA_API_BASE_URL,
-            key=RAG_JINA_API_KEY,
+            url=embedding_url,
+            key=embedding_key,
         )
         query_embedding = embedding_function(form_data.query, user=user)
 
@@ -402,11 +403,12 @@ def query_doc_handler(
             # (RerankCompressor handles reranking_function=None).
             reranking_function = None
             if rerank_engine and rerank_model:
+                rerank_url, rerank_key = resolve_credentials(rerank_engine)
                 reranking_function = get_reranking_function(
                     rerank_engine,
                     rerank_model,
-                    url=RAG_JINA_API_BASE_URL,
-                    key=RAG_JINA_API_KEY,
+                    url=rerank_url,
+                    key=rerank_key,
                 )
 
             for collection_name in collections:
