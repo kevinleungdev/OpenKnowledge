@@ -12,4 +12,4 @@ skills-lock.json
 .agents/
 
 # Data folder
-data/
+/data/
