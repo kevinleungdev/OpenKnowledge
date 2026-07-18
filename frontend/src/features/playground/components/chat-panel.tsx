@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import { Pencil, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -79,7 +80,11 @@ export function ChatPanel({ className }: { className?: string }) {
     <div className={cn('relative flex flex-col', className)}>
       {/* Header: editable title (left) + Run Settings toggle (right, hidden when open) */}
       <div className='flex items-center justify-between px-1 py-2'>
-        <EditableTitle />
+        <div className='flex items-center gap-1'>
+          {/* Mobile-only sidebar trigger (desktop uses the sidebar-header toggle) */}
+          <SidebarTrigger className={cn(mutedIconButtonClass, 'md:hidden')} />
+          <EditableTitle />
+        </div>
         {!runSettingsOpen && (
           <Button
             type='button'
