@@ -89,62 +89,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           )}
         </div>
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex flex-row gap-2">
-          <div className="flex flex-row gap-2 bg-muted border-border text-muted-foreground focus:ring-ring rounded-xl rounded-t-sm pl-2 max-w-full sm:max-w-[90%]">
-            <div className="flex flex-row items-center text-sm">
-              <Brain className="h-4 w-4 mr-2" />
-              Effort
-            </div>
-            <Select value={effort} onValueChange={setEffort}>
-              <SelectTrigger className="w-30 bg-transparent border-none cursor-pointer">
-                <SelectValue placeholder="Effort" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border text-popover-foreground cursor-pointer">
-                <SelectItem
-                  value="low"
-                  className="hover:bg-accent focus:bg-accent cursor-pointer"
-                >
-                  Low
-                </SelectItem>
-                <SelectItem
-                  value="medium"
-                  className="hover:bg-accent focus:bg-accent cursor-pointer"
-                >
-                  Medium
-                </SelectItem>
-                <SelectItem
-                  value="high"
-                  className="hover:bg-accent focus:bg-accent cursor-pointer"
-                >
-                  High
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-row gap-2 bg-muted border-border text-muted-foreground focus:ring-ring rounded-xl rounded-t-sm pl-2 max-w-full sm:max-w-[90%]">
-            <div className="flex flex-row items-center text-sm ml-2">
-              <Cpu className="h-4 w-4 mr-2" />
-              Model
-            </div>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="w-50 bg-transparent border-none cursor-pointer">
-                <SelectValue placeholder="Model" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  value="ark-code-latest"
-                  className="hover:bg-accent focus:bg-accent cursor-pointer"
-                >
-                  <div className="flex items-center">
-                    <Zap className="h-4 w-4 mr-2 text-yellow-500" /> Ark Coding Plan
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
     </form>
   )
 }

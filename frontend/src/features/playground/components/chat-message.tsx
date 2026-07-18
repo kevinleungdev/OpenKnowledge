@@ -142,9 +142,6 @@ const HumanMessageBubble: React.FC<HumanMessageBubbleProps> = ({
     <div className='flex w-full flex-col items-end gap-2 py-4'>
       {/* Header row: timestamp + Avatar */}
       <div className='flex items-center gap-3'>
-        <span className='text-xs text-muted-foreground'>
-          {format(message.timestamp, 'h:mm a')}
-        </span>
         <Avatar className='size-8 shrink-0'>
           <AvatarFallback>
             <User size={16} />
@@ -192,9 +189,6 @@ const AiMessageBubble: React.FC<AiMessageBubbleProps> = ({
             <Bot size={16} />
           </AvatarFallback>
         </Avatar>
-        <span className={cn('text-xs text-muted-foreground', 'text-left')}>
-          {format(message.timestamp, 'h:mm a')}
-        </span>
       </div>
 
       {/* Content: Markdown bubble + Copy button */}
