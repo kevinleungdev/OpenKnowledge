@@ -1,14 +1,7 @@
-import { useState, type KeyboardEvent } from 'react'
-import { Textarea } from '@/components/ui/textarea'
-import { Brain, Cpu, Send, StopCircle, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue
-} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Send, StopCircle } from 'lucide-react';
+import { useState, type KeyboardEvent } from 'react';
 
 // Updated ChatInputProps
 interface ChatInputProps {

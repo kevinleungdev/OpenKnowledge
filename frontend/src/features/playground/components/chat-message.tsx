@@ -1,14 +1,13 @@
-import { useState, ReactNode } from 'react'
-import { format } from 'date-fns'
-import { Bot, Copy, CopyCheck, Loader2, User } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import { cn } from '@/lib/utils'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import type { Message } from '../data/types'
-import { ChatInput } from './chat-input'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
+import { Bot, Copy, CopyCheck, Loader2, User } from 'lucide-react';
+import { ReactNode, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import type { Message } from '../data/types';
+import { ChatInput } from './chat-input';
 
 // Markdown component props type from former ReportView
 type MdComponentProps = {
