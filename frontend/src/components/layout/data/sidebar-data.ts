@@ -1,9 +1,5 @@
 import {
-  AudioWaveform,
   Bell,
-  PlusSquare,
-  Command,
-  GalleryVerticalEnd,
   History,
   MessagesSquare,
   Monitor,
