@@ -21,23 +21,6 @@ export const sidebarData: SidebarData = {
     email: 'kevinleungdev@gmail.com',
     avatar: '/avatars/shadcn.jpg',
   },
-  teams: [
-    {
-      name: 'Open Knowledge',
-      logo: Command,
-      plan: 'Vite + ShadcnUI',
-    },
-    {
-      name: 'Acme Inc',
-      logo: GalleryVerticalEnd,
-      plan: 'Enterprise',
-    },
-    {
-      name: 'Acme Corp.',
-      logo: AudioWaveform,
-      plan: 'Startup',
-    },
-  ],
   navGroups: [
     {
       title: 'EXPLORE',
@@ -55,13 +38,8 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
-      title: 'KNOWLEDGE',
+      title: 'BUILD',
       items: [
-        {
-          title: 'Add Knowledge',
-          url: '/users',
-          icon: PlusSquare,
-        },
         {
           title: 'Knowledge',
           url: '/apps',
