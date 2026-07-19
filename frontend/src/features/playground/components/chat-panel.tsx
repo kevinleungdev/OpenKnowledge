@@ -51,7 +51,7 @@ function EditableTitle() {
           }
         }}
         onBlur={commit}
-        className='h-7 w-48 text-sm'
+        className='h-9 w-64 text-lg'
       />
     )
   }
@@ -60,10 +60,10 @@ function EditableTitle() {
     <button
       type='button'
       onClick={startEdit}
-      className='flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-primary'
+      className='flex items-center gap-1.5 text-lg font-semibold text-foreground hover:text-primary'
     >
       {title}
-      <Pencil className='size-3.5 text-muted-foreground' />
+      <Pencil className='size-4 text-muted-foreground' />
     </button>
   )
 }
@@ -79,7 +79,7 @@ export function ChatPanel({ className }: { className?: string }) {
   return (
     <div className={cn('relative flex flex-col', className)}>
       {/* Header: editable title (left) + Run Settings toggle (right, hidden when open) */}
-      <div className='flex items-center justify-between px-1 py-2'>
+      <div className='flex items-center justify-between px-2 py-3'>
         <div className='flex items-center gap-1'>
           {/* Mobile-only sidebar trigger (desktop uses the sidebar-header toggle) */}
           <SidebarTrigger className={cn(mutedIconButtonClass, 'md:hidden')} />
@@ -90,17 +90,17 @@ export function ChatPanel({ className }: { className?: string }) {
             type='button'
             variant='ghost'
             size='icon'
-            className={mutedIconButtonClass}
+            className={cn(mutedIconButtonClass, 'size-8')}
             onClick={() => setRunSettingsOpen(true)}
             aria-label='Open run settings'
           >
-            <SlidersHorizontal className='size-4' />
+            <SlidersHorizontal className='size-5' />
           </Button>
         )}
       </div>
 
       {/* Scrollable message list - plain div with hidden scrollbar (no radix ScrollArea) */}
-      <div className='relative min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+      <div className='relative min-h-0 flex-1 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden'>
         <ChatMessagesView />
       </div>
 

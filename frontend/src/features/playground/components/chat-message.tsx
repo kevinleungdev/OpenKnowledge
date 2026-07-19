@@ -255,7 +255,8 @@ const AiMessageBubble: FC<AiMessageBubbleProps> = ({
 
 // Static seed exchange - placeholder content, not server state. Held here (not
 // in the provider, not in TanStack Query) until the Run pipeline is wired.
-const SEED_AI_REPLY = `Here's a compact bubble sort in Python:
+// Several turns so the scrollable area can be exercised.
+const SEED_AI_BUBBLE = `Here's a compact bubble sort in Python:
 
 \`\`\`python
 def bubble_sort(items):
@@ -269,21 +270,98 @@ def bubble_sort(items):
 
 It walks the list repeatedly, swapping adjacent pairs that are out of order, until a full pass makes no swaps.`
 
+const SEED_AI_SELECTION = `Selection sort picks the smallest remaining element on each pass and swaps it into place:
+
+\`\`\`python
+def selection_sort(items):
+    for i in range(len(items)):
+        lo = i
+        for j in range(i + 1, len(items)):
+            if items[j] < items[lo]:
+                lo = j
+        items[i], items[lo] = items[lo], items[i]
+    return items
+\`\`\`
+
+It does fewer swaps than bubble sort but still makes O(n²) comparisons.`
+
+const SEED_AI_INSERTION = `Insertion sort builds the sorted list one item at a time, inserting each into its correct spot:
+
+\`\`\`python
+def insertion_sort(items):
+    for i in range(1, len(items)):
+        cur = items[i]
+        j = i - 1
+        while j >= 0 and items[j] > cur:
+            items[j + 1] = items[j]
+            j -= 1
+        items[j + 1] = cur
+    return items
+\`\`\`
+
+It shines on small or nearly-sorted lists.`
+
+const SEED_AI_NEARLY = `For nearly-sorted data, **insertion sort** is typically the best of these three. It runs in near O(n) time when each element is only a few positions from its target, because the inner \`while\` loop barely moves.
+
+Bubble sort can also approach O(n) with an early-exit check, but insertion sort is usually faster in practice.`
+
+const SEED_AI_MERGE = `Merge sort is divide-and-conquer - O(n log n) guaranteed:
+
+\`\`\`python
+def merge_sort(items):
+    if len(items) <= 1:
+        return items
+    mid = len(items) // 2
+    left = merge_sort(items[:mid])
+    right = merge_sort(items[mid:])
+    return merge(left, right)
+
+def merge(left, right):
+    out = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            out.append(left[i]); i += 1
+        else:
+            out.append(right[j]); j += 1
+    out.extend(left[i:]); out.extend(right[j:])
+    return out
+\`\`\`
+
+It needs O(n) extra space but is stable.`
+
+const SEED_AI_QUICK = `Quicksort partitions around a pivot and recurses - O(n log n) average, O(n²) worst case:
+
+\`\`\`python
+def quicksort(items):
+    if len(items) <= 1:
+        return items
+    pivot = items[len(items) // 2]
+    less = [x for x in items if x < pivot]
+    equal = [x for x in items if x == pivot]
+    greater = [x for x in items if x > pivot]
+    return quicksort(less) + equal + quicksort(greater)
+\`\`\`
+
+This version is concise but not in-place; in-place variants are more memory-efficient.`
+
+const SEED_MESSAGES: Message[] = [
+  { id: 'seed-human-1', type: 'human', content: 'Bubble sort algorithm in Python', timestamp: new Date() },
+  { id: 'seed-ai-1', type: 'ai', content: SEED_AI_BUBBLE, timestamp: new Date() },
+  { id: 'seed-human-2', type: 'human', content: 'How does selection sort differ?', timestamp: new Date() },
+  { id: 'seed-ai-2', type: 'ai', content: SEED_AI_SELECTION, timestamp: new Date() },
+  { id: 'seed-human-3', type: 'human', content: 'What about insertion sort?', timestamp: new Date() },
+  { id: 'seed-ai-3', type: 'ai', content: SEED_AI_INSERTION, timestamp: new Date() },
+  { id: 'seed-human-4', type: 'human', content: 'Which is best for nearly-sorted data?', timestamp: new Date() },
+  { id: 'seed-ai-4', type: 'ai', content: SEED_AI_NEARLY, timestamp: new Date() },
+  { id: 'seed-human-5', type: 'human', content: 'Show me merge sort', timestamp: new Date() },
+  { id: 'seed-ai-5', type: 'ai', content: SEED_AI_MERGE, timestamp: new Date() },
+  { id: 'seed-human-6', type: 'human', content: 'And quicksort?', timestamp: new Date() },
+  { id: 'seed-ai-6', type: 'ai', content: SEED_AI_QUICK, timestamp: new Date() },
+]
+
 export function ChatMessagesView() {
-  const [messages] = useState<Message[]>(() => [
-    {
-      id: 'seed-human',
-      type: 'human',
-      content: 'Bubble sort algorithm in Python',
-      timestamp: new Date(),
-    },
-    {
-      id: 'seed-ai',
-      type: 'ai',
-      content: SEED_AI_REPLY,
-      timestamp: new Date(),
-    },
-  ])
+  const [messages] = useState<Message[]>(() => SEED_MESSAGES)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
 
   const handleCopy = async (text: string, messageId: string) => {

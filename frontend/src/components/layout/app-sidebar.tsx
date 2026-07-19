@@ -27,7 +27,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <NavUser user={sidebarData.user} />
       </SidebarFooter>
-      <SidebarRail />
+      <SidebarRail className='after:bg-sidebar-border' />
     </Sidebar>
   )
 }
